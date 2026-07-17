@@ -56,12 +56,13 @@
     </div>
 </div>
 
-<!-- 카카오 지도 API 로드 (자동 로드 꺼두고 스크립트 실행 제어) -->
-<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=832822a15fcf80a30704eb8627ec710f&libraries=services&autoload=false"></script>
+<!-- 카카오 지도 API 로드 (보안 및 프로토콜 규격 완전 신뢰 주소로 적용) -->
+<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=832822a15fcf80a30704eb8627ec710f&libraries=services"></script>
 
 <script>
     // 카카오 JavaScript SDK 초기화 (공유용)
-    Kakao.init('832822a15fcf80a30704eb8627ec710f');
+    Kakao.init('832822a15fcf80a30704eb8627ec710f'); 
+
     // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
     let selectedLng = 126.978656;
@@ -130,10 +131,14 @@
         });
     }
 
-    // 카카오 지도 스크립트가 완전히 로드되면 실행되도록 안전 호출
-    kakao.maps.load(function() {
-        drawMap();
-    });
+    // 문서가 준비되면 지도를 바로 로드하도록 실행 지점 단순화
+    window.onload = function() {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+            kakao.maps.load(drawMap);
+        } else {
+            console.error("카카오 맵 로드에 실패했습니다.");
+        }
+    };
 
     // [공유하기] 카톡 링크 전송
     function shareKakao() {
