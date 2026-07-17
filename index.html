@@ -3,22 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모여라 내비! - 내 맘대로 목적지 공유</title>
-    <!-- 카카오 SDK 및 주소 검색 스크립트 로드 -->
+    <title>모여라 내비! - 네이버 지도에서 핀 꽂고 공유하기</title>
+    <!-- 카카오 SDK 및 네이버 웹 지도 API v3 로드 -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
-    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=k8zmdg7oas&submodules=geocoder"></script>
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #2f3640; margin-bottom: 5px; }
-        p { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
-        .form-group { text-align: left; margin-bottom: 15px; }
-        label { font-weight: bold; color: #333; display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f9f9f9; }
-        .btn-search { width: 100%; background-color: #3498db; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 15px; }
-        .btn-kakao { width: 100%; background-color: #fee500; color: #191919; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .navi-group { display: flex; gap: 10px; justify-content: space-between; }
-        .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; text-decoration: none; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 10px; display: flex; justify-content: center; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 430px; text-align: center; box-sizing: border-box; }
+        h2 { color: #2f3640; margin: 10px 0 5px 0; font-size: 20px; }
+        p { color: #7f8c8d; font-size: 13px; margin-bottom: 15px; }
+        
+        /* 네이버 지도 영역 스타일 */
+        #map { width: 100%; height: 300px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 15px; }
+        
+        .info-box { background-color: #f8f9fa; padding: 12px; border-radius: 8px; text-align: left; margin-bottom: 15px; border: 1px solid #e9ecef; }
+        .info-title { font-weight: bold; color: #495057; font-size: 14px; margin-bottom: 5px; }
+        .info-desc { color: #868e96; font-size: 12px; word-break: break-all; }
+        
+        .btn-kakao { width: 100%; background-color: #fee500; color: #191919; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 16px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .navi-group { display: flex; gap: 8px; justify-content: space-between; }
+        .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; }
         .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
         .tmap-btn { background-color: #ff5000; }
         .naver-btn { background-color: #03c75a; }
@@ -27,31 +31,25 @@
 <body>
 
 <div class="container">
-    <h2>📍 모여라 내비!</h2>
-    <p>목적지를 직접 선택하고 단체방에 공유해 보세요.</p>
+    <h2>📍 네이버 지도에서 핀 꽂고 모여라!</h2>
+    <p>지도를 터치하여 목적지를 선택하고 공유해 보세요.</p>
 
-    <!-- 1. 목적지 검색 버튼 -->
-    <button class="btn-search" onclick="searchLocation()">🔍 주소 검색구역에서 목적지 선택하기</button>
+    <!-- 네이버 지도가 그려지는 영역 -->
+    <div id="map"></div>
 
-    <div class="form-group">
-        <label>선택된 목적지 이름</label>
-        <input type="text" id="targetName" placeholder="주소를 검색하면 자동으로 입력됩니다." readonly>
-    </div>
-    <div class="form-group">
-        <label>위도 (Latitude)</label>
-        <input type="text" id="targetLat" placeholder="0.0000" readonly>
-    </div>
-    <div class="form-group">
-        <label>경도 (Longitude)</label>
-        <input type="text" id="targetLng" placeholder="0.0000" readonly>
+    <!-- 선택된 위치 정보 표시 구역 -->
+    <div class="info-box">
+        <div class="info-title">선택된 목적지</div>
+        <div class="info-desc" id="targetAddr">지도를 클릭하여 목적지를 정해 주세요.</div>
+        <div style="font-size: 11px; color: #adb5bd; margin-top: 5px;" id="targetCoords"></div>
     </div>
 
-    <!-- 2. 실시간 카카오톡 공유 버튼 -->
-    <button class="btn-kakao" onclick="shareKakao()">💬 카카오톡 단체방 공유하기</button>
+    <!-- 카카오톡 공유 버튼 -->
+    <button class="btn-kakao" onclick="shareKakao()">💬 이 위치 단체방에 공유하기</button>
 
-    <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
+    <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
 
-    <h3 style="font-size: 14px; color:#7f8c8d; text-align:left; margin-bottom:10px;">받은 사람이 누르는 내비 실행</h3>
+    <h3 style="font-size: 13px; color:#7f8c8d; text-align:left; margin-bottom:10px;">받은 사람이 누르는 내비 실행</h3>
     <div class="navi-group">
         <button class="btn-navi kakao-btn" onclick="openNavi('kakao')">카카오내비</button>
         <button class="btn-navi tmap-btn" onclick="openNavi('tmap')">티맵</button>
@@ -63,115 +61,147 @@
     // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
     Kakao.init('e362e2f6732ec4e3be0a91ec878ea9b3'); 
 
-    // 주소창(URL)에 좌표가 매달려 왔는지 확인하고 자동 세팅하는 함수 (카톡 링크 클릭 시 작동)
-    function initFromUrl() {
+    // 글로벌 위치 변수 초기화 (기본값: 인천 옥련동/동춘동 아파트 인근 혹은 서울시청)
+    let selectedLat = 37.4125; 
+    let selectedLng = 126.6661;
+    let selectedName = "지정된 목적지";
+
+    let map;
+    let marker;
+
+    // 1. 네이버 지도 초기화 함수
+    function initNaverMap() {
         const urlParams = new URLSearchParams(window.location.search);
         const name = urlParams.get('name');
         const lat = urlParams.get('lat');
         const lng = urlParams.get('lng');
 
         if (name && lat && lng) {
-            document.getElementById('targetName').value = decodeURIComponent(name);
-            document.getElementById('targetLat').value = lat;
-            document.getElementById('targetLng').value = lng;
+            selectedName = decodeURIComponent(name);
+            selectedLat = parseFloat(lat);
+            selectedLng = parseFloat(lng);
         }
-    }
-    window.onload = initFromUrl;
 
-    // Daum 주소 검색 창을 띄워 사용자가 직접 목적지를 선택하게 하는 함수
-    function searchLocation() {
-        new daum.Postcode({
-            oncomplete: function(data) {
-                // 사용자가 선택한 주소 이름 대입
-                document.getElementById('targetName').value = data.address;
-                
-                // 주소를 좌표(위도/경도)로 바꾸기 위해 카카오 로컬 API 통신 진행
-                fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(data.address)}`, {
-                    headers: { 'Authorization': 'KakaoAK e362e2f6732ec4e3be0a91ec878ea9b3' }
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if(result.documents && result.documents.length > 0) {
-                        const lon = result.documents[0].x; // 경도
-                        const lat = result.documents[0].y; // 위도
-                        document.getElementById('targetLat').value = lat;
-                        document.getElementById('targetLng').value = lon;
-                    } else {
-                        alert("좌표를 불러오지 못했습니다. 다른 주소로 시도해 주세요.");
+        // 지도 객체 생성 (기본 설정)
+        map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng(selectedLat, selectedLng),
+            zoom: 15,
+            mapTypeControl: true
+        });
+
+        // 빨간색 마커 생성
+        marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(selectedLat, selectedLng),
+            map: map
+        });
+
+        // 텍스트 정보 업데이트
+        if (name && lat && lng) {
+            document.getElementById('targetAddr').innerText = selectedName;
+            document.getElementById('targetCoords').innerText = `위도: ${selectedLat.toFixed(5)} / 경도: ${selectedLng.toFixed(5)}`;
+        } else {
+            searchAddrFromCoords(selectedLat, selectedLng);
+        }
+
+        // 2. 네이버 지도 클릭(터치) 이벤트 등록
+        naver.maps.Event.addListener(map, 'click', function(e) {
+            const latlng = e.coord;
+            selectedLat = latlng.lat();
+            selectedLng = latlng.lng();
+
+            // 핀 마커 위치 이동
+            marker.setPosition(latlng);
+
+            // 클릭한 곳의 좌표를 주소 문자열로 변환 (역지오코딩)
+            searchAddrFromCoords(selectedLat, selectedLng);
+        });
+    }
+
+    // 네이버 지오코더를 사용해 좌표를 사람이 읽는 주소로 변환합니다.
+    function searchAddrFromCoords(lat, lng) {
+        naver.maps.Service.reverseGeocode({
+            coords: new naver.maps.LatLng(lat, lng),
+            orders: [
+                naver.maps.Service.OrderType.ADDR,
+                naver.maps.Service.OrderType.ROAD_ADDR
+            ].join(',')
+        }, function(status, response) {
+            if (status === naver.maps.Service.Status.OK) {
+                const items = response.v2.results;
+                if (items.length > 0) {
+                    selectedName = items[0].addressElements.map(el => el.value).join(' ').trim() || "지정된 위치";
+                    
+                    // 불필요한 중복 구역 제거 가공
+                    if(response.v2.address && response.v2.address.jibunAddress) {
+                        selectedName = response.v2.address.jibunAddress;
                     }
-                })
-                .catch(err => alert("좌표 변환 실패: " + err));
+                    
+                    document.getElementById('targetAddr').innerText = selectedName;
+                    document.getElementById('targetCoords').innerText = `위도: ${selectedLat.toFixed(5)} / 경도: ${selectedLng.toFixed(5)}`;
+                }
+            } else {
+                selectedName = "지정된 위치";
+                document.getElementById('targetAddr').innerText = selectedName;
             }
-        }).open();
+        });
     }
 
-    // [핵심] 현재 선택된 목적지 좌표를 주소 뒤에 실시간으로 매달아서 카톡방에 쏘는 함수
-    function shareKakao() {
-        const name = document.getElementById('targetName').value;
-        const lat = document.getElementById('targetLat').value;
-        const lng = document.getElementById('targetLng').value;
+    // 페이지 로드 시 네이버 지도 초기화 실행
+    window.onload = initNaverMap;
 
-        if (!name || !lat || !lng) {
-            alert("먼저 위의 버튼을 눌러 목적지를 선택해 주세요!");
+    // 3. [공유하기] 클릭한 좌표를 카톡 링크 뒤에 매달아 쏘기
+    function shareKakao() {
+        if (!selectedName || !selectedLat || !selectedLng) {
+            alert("지도를 터치하여 목적지를 먼저 선택해 주세요!");
             return;
         }
 
-        // 깃허브 진짜 주소 뒤에 실시간 좌표 파라미터를 붙여 전송 주소 생성
-        const shareUrl = `https://wavenumber12-cyber.github.io/navi/?name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}`;
+        const shareUrl = `https://wavenumber12-cyber.github.io/navi/?name=${encodeURIComponent(selectedName)}&lat=${selectedLat}&lng=${selectedLng}`;
 
         Kakao.Share.sendDefault({
             objectType: 'feed',
             content: {
-                title: '📍 모여라 내비! 목적지 도착',
-                description: `목적지: ${name}\n이 링크를 눌러 원하시는 내비게이션을 선택하세요!`,
+                title: '📍 모여라 내비! 목적지 공유',
+                description: `목적지: ${selectedName}\n위 링크를 눌러 사용할 내비를 선택해 이동하세요!`,
                 imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=500',
                 link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
             },
             buttons: [{
-                title: '내비 실행하러 가기',
+                title: '목적지 확인 및 내비 실행',
                 link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
             }],
         });
     }
 
-    // 내비게이션 앱 실행 로직 (최신 에러 보완 및 우회 버전)
+    // 4. 각 내비게이션 앱 실행 처리 로직
     function openNavi(type) {
-        const name = document.getElementById('targetName').value;
-        const lat = document.getElementById('targetLat').value;
-        const lng = document.getElementById('targetLng').value;
-
-        if (!name || !lat || !lng) {
-            alert("길안내를 시작할 목적지가 없습니다.");
-            return;
-        }
-
         if (type === 'kakao') {
             try {
                 Kakao.Navi.start({
-                    name: name,
-                    x: parseFloat(lng),
-                    y: parseFloat(lat),
+                    name: selectedName,
+                    x: parseFloat(selectedLng),
+                    y: parseFloat(selectedLat),
                     coordType: 'wgs84',
                 });
             } catch (err) {
-                alert('카카오내비 실행 실패. 앱 설치 여부를 확인하세요.');
+                alert('카카오내비 실행에 실패했습니다.');
             }
             return;
         } 
         
         let url = '';
         if (type === 'tmap') {
-            url = `tmap://route?rGoName=${encodeURIComponent(name)}&rGoX=${lng}&rGoY=${lat}`;
+            url = `tmap://route?rGoName=${encodeURIComponent(selectedName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
         } else if (type === 'naver') {
-            url = `nmap://navigation?dname=${encodeURIComponent(name)}&dlat=${lat}&dlng=${lng}`;
+            url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
 
         window.location.href = url;
 
         setTimeout(() => {
             if (type === 'tmap') {
-                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(name)}&ex=${lng}&ey=${lat}`;
-                if (confirm('티맵 앱이 실행되지 않았습니다. 대체 지도로 안내받으시겠습니까?')) {
+                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(selectedName)}&ex=${selectedLng}&ey=${selectedLat}`;
+                if (confirm('티맵 앱이 실행되지 않았습니다. 대체 길찾기로 확인하시겠습니까?')) {
                     window.location.href = fallbackUrl;
                 }
             }
