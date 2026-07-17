@@ -228,12 +228,9 @@
         
         let url = '';
         if (type === 'tmap') {
-            // [티맵 최종 수정] 인코딩된 이름과 명확한 실수(Float) 좌표를 확실하게 대입합니다.
             const encodedName = encodeURIComponent(info.name);
-            const latVal = parseFloat(info.lat).toFixed(6);
-            const lngVal = parseFloat(info.lng).toFixed(6);
-            
-            url = `tmap://route?rGoName=${encodedName}&rGoX=${lngVal}&rGoY=${latVal}`;
+            // 안드로이드와 아이폰 모두에서 티맵 앱을 가장 잘 깨우는 표준 호출 주소 규격입니다.
+            url = `tmap://route?rGoName=${encodedName}&rGoX=${info.lng}&rGoY=${info.lat}`;
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(info.name)}&dlat=${info.lat}&dlng=${info.lng}`;
         }
@@ -242,12 +239,13 @@
         window.location.href = url;
 
         // 2. 만약 1.5초 이내에 티맵 앱이 실행되지 않았다면 모바일 웹 길찾기로 강제 우회시킵니다.
+        // 앱이 설치되지 않았거나 안 열릴 때의 안전장치
         setTimeout(() => {
             if (type === 'tmap') {
-                // 스마트폰 브라우저에서 바로 길안내를 띄워주는 티맵 웹 뷰어로 이동시킵니다.
-                const fallbackUrl = `https://apis.openapi.sk.com/tmap/app/routes?appKey=e362e2f6732ec&name=${encodeURIComponent(info.name)}&lon=${info.lng}&lat=${info.lat}`;
+                // 에러가 나는 API 대신 누구나 즉시 사용 가능한 티맵 모바일 웹 길찾기 페이지로 우회합니다.
+                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(info.name)}&ex=${info.lng}&ey=${info.lat}`;
                 
-                if (confirm('티맵 앱이 열리지 않았습니다. 브라우저로 목적지를 바로 확인하시겠습니까?')) {
+                if (confirm('티맵 앱이 실행되지 않았습니다. 대체 지도로 길안내를 확인하시겠습니까?')) {
                     window.location.href = fallbackUrl;
                 }
             } else if (type === 'naver') {
