@@ -131,13 +131,23 @@
     }
 
     // 문서 로딩이 완료되면 즉시 지도 생성 실행
-    window.onload = function() {
-        if (typeof kakao !== 'undefined' && kakao.maps) {
-            drawMap();
-        } else {
-            alert("카카오 지도 라이브러리를 불러오지 못했습니다. 카카오 개발자 센터의 '제품 설정 > 카카오맵' 상태가 ON으로 켜져 있는지 꼭 확인해 주세요!");
-        }
-    };
+    // 수정된 코드
+window.onload = function() {
+    if (typeof kakao !== 'undefined' && kakao.maps) {
+        drawMap();
+
+        // 지도가 그려진 후 0.2초 뒤에 크기를 강제로 재설정하여 화면에 나타나게 만듭니다.
+        setTimeout(function() {
+            if (map) {
+                map.relayout();
+                map.setCenter(new kakao.maps.LatLng(selectedLat, selectedLng));
+            }
+        }, 200);
+
+    } else {
+        alert("카카오 지도 라이브러리를 불러오지 못했습니다. 카카오 개발자 센터의 '제품 설정 > 카카오맵' 상태가 ON으로 켜져 있는지 꼭 확인해 주세요!");
+    }
+};
 
     // [공유하기] 카톡 링크 전송
     function shareKakao() {
