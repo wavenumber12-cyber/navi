@@ -3,272 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모여라 내비! - 목적지 공유</title>
-    <!-- 카카오톡 SDK 포함 (보안 검증 무력화 방지를 위해 integrity 속성 제거) -->
+    <title>모여라 내비! - 내 맘대로 목적지 공유</title>
+    <!-- 카카오 SDK 및 주소 검색 스크립트 로드 -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f5f7;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background-color: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-        h1 {
-            font-size: 1.5rem;
-            color: #1d1d1f;
-            margin-top: 0;
-            text-align: center;
-        }
-        p {
-            font-size: 0.9rem;
-            color: #86868b;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        .input-group {
-            margin-bottom: 16px;
-        }
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #515154;
-            margin-bottom: 6px;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d2d2d7;
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            outline: none;
-        }
-        input:focus {
-            border-color: #0071e3;
-        }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 10px;
-            transition: opacity 0.2s;
-        }
-        .btn:active {
-            opacity: 0.8;
-        }
-        .btn-kakao {
-            background-color: #FEE500;
-            color: #191919;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .navi-section {
-            margin-top: 24px;
-            border-top: 1px solid #e5e5e7;
-            padding-top: 20px;
-        }
-        .navi-title {
-            font-size: 0.95rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #1d1d1f;
-        }
-        .navi-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-        }
-        .btn-navi {
-            padding: 10px 4px;
-            font-size: 0.85rem;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: bold;
-        }
-        .btn-kakaonavi { background-color: #ffcd00; color: #3c1e1e; }
-        .btn-tmap { background-color: #ff5000; }
-        .btn-naver { background-color: #03cf5d; }
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #2f3640; margin-bottom: 5px; }
+        p { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        label { font-weight: bold; color: #333; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f9f9f9; }
+        .btn-search { width: 100%; background-color: #3498db; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 15px; }
+        .btn-kakao { width: 100%; background-color: #fee500; color: #191919; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .navi-group { display: flex; gap: 10px; justify-content: space-between; }
+        .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; text-decoration: none; }
+        .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
+        .tmap-btn { background-color: #ff5000; }
+        .naver-btn { background-color: #03c75a; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📍 모여라 내비!</h1>
-    <p>목적지를 입력하고 단체방에 공유해 보세요.</p>
+    <h2>📍 모여라 내비!</h2>
+    <p>목적지를 직접 선택하고 단체방에 공유해 보세요.</p>
 
-    <!-- 1. 목적지 정보 입력란 -->
-    <div class="input-group">
-        <label for="placeName">목적지 이름</label>
-        <input type="text" id="placeName" value="삼청동 수제비">
+    <!-- 1. 목적지 검색 버튼 -->
+    <button class="btn-search" onclick="searchLocation()">🔍 주소 검색구역에서 목적지 선택하기</button>
+
+    <div class="form-group">
+        <label>선택된 목적지 이름</label>
+        <input type="text" id="targetName" placeholder="주소를 검색하면 자동으로 입력됩니다." readonly>
     </div>
-    <div class="input-group">
-        <label for="latitude">위도 (Latitude)</label>
-        <input type="number" id="latitude" value="37.5843" step="0.0001">
+    <div class="form-group">
+        <label>위도 (Latitude)</label>
+        <input type="text" id="targetLat" placeholder="0.0000" readonly>
     </div>
-    <div class="input-group">
-        <label for="longitude">경도 (Longitude)</label>
-        <input type="number" id="longitude" value="126.9821" step="0.0001">
+    <div class="form-group">
+        <label>경도 (Longitude)</label>
+        <input type="text" id="targetLng" placeholder="0.0000" readonly>
     </div>
 
-    <!-- 2. 카카오톡 공유 버튼 -->
-    <button class="btn btn-kakao" onclick="shareViaKakao()">
-        💬 카카오톡 단체방 공유하기
-    </button>
+    <!-- 2. 실시간 카카오톡 공유 버튼 -->
+    <button class="btn-kakao" onclick="shareKakao()">💬 카카오톡 단체방 공유하기</button>
 
-    <!-- 3. 내 폰에서 바로 실행해보기 (테스트용) -->
-    <div class="navi-section">
-        <div class="navi-title">내 폰에서 바로 테스트하기</div>
-        <div class="navi-grid">
-            <button class="btn-navi btn-kakaonavi" onclick="openNavi('kakao')">카카오내비</button>
-            <button class="btn-navi btn-tmap" onclick="openNavi('tmap')">티맵</button>
-            <button class="btn-navi btn-naver" onclick="openNavi('naver')">네이버</button>
-        </div>
+    <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
+
+    <h3 style="font-size: 14px; color:#7f8c8d; text-align:left; margin-bottom:10px;">받은 사람이 누르는 내비 실행</h3>
+    <div class="navi-group">
+        <button class="btn-navi kakao-btn" onclick="openNavi('kakao')">카카오내비</button>
+        <button class="btn-navi tmap-btn" onclick="openNavi('tmap')">티맵</button>
+        <button class="btn-navi naver-btn" onclick="openNavi('naver')">네이버</button>
     </div>
 </div>
 
 <script>
-    // 내 실제 발급받은 JavaScript 키로 설정 완료!
-    const KAKAO_JS_KEY = 'e362e2f6732ecf112d8751219e8d3d61'; 
+    // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
+    Kakao.init('e362e2f6732ec4e3be0a91ec878ea9b3'); 
 
-    // 카카오 SDK 초기화 실행
-    try {
-        if (!Kakao.isInitialized()) {
-            Kakao.init(KAKAO_JS_KEY);
-            console.log('카카오 SDK 초기화 완료!');
-        }
-    } catch(e) {
-        console.error('카카오 SDK 초기화 실패:', e);
-    }
+    // 주소창(URL)에 좌표가 매달려 왔는지 확인하고 자동 세팅하는 함수 (카톡 링크 클릭 시 작동)
+    function initFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+        const lat = urlParams.get('lat');
+        const lng = urlParams.get('lng');
 
-    // 입력값 가져오는 함수
-    function getTargetInfo() {
-        return {
-            name: document.getElementById('placeName').value,
-            lat: document.getElementById('latitude').value,
-            lng: document.getElementById('longitude').value
-        };
-    }
-
-    // 1. 카카오톡 단체방 공유 함수
-    function shareViaKakao() {
-        const info = getTargetInfo();
-        
-        // 사용자가 카톡 메시지에서 클릭하면 이 웹사이트로 다시 접속되면서 
-        // 주소창 뒤에 ?name=장소&lat=위도&lng=경도 매개변수를 붙여 보냅니다.
-        const shareUrl = `${window.location.origin}${window.location.pathname}?name=${encodeURIComponent(info.name)}&lat=${info.lat}&lng=${info.lng}`;
-
-        try {
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: '📍 모임 목적지가 도착했습니다!',
-                    description: `목적지: ${info.name}\n클릭하면 내비게이션으로 바로 연결됩니다.`,
-                    imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400', // 메시지 대표 이미지
-                    link: {
-                        mobileWebUrl: shareUrl,
-                        webUrl: shareUrl,
-                    },
-                },
-                buttons: [
-                    {
-                        title: '내비 실행하기',
-                        link: {
-                            mobileWebUrl: shareUrl,
-                            webUrl: shareUrl,
-                        },
-                    },
-                ],
-            });
-        } catch (err) {
-            console.error('카카오 공유하기 실행 에러:', err);
-            alert('카카오톡 공유 중 오류가 발생했습니다. 개발자도구 콘솔을 확인해 주세요.');
+        if (name && lat && lng) {
+            document.getElementById('targetName').value = decodeURIComponent(name);
+            document.getElementById('targetLat').value = lat;
+            document.getElementById('targetLng').value = lng;
         }
     }
+    window.onload = initFromUrl;
 
-   // 2. 각 내비게이션 앱 연동 호출 함수 (에러 수정 버전)
+    // Daum 주소 검색 창을 띄워 사용자가 직접 목적지를 선택하게 하는 함수
+    function searchLocation() {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                // 사용자가 선택한 주소 이름 대입
+                document.getElementById('targetName').value = data.address;
+                
+                // 주소를 좌표(위도/경도)로 바꾸기 위해 카카오 로컬 API 통신 진행
+                fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(data.address)}`, {
+                    headers: { 'Authorization': 'KakaoAK e362e2f6732ec4e3be0a91ec878ea9b3' }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if(result.documents && result.documents.length > 0) {
+                        const lon = result.documents[0].x; // 경도
+                        const lat = result.documents[0].y; // 위도
+                        document.getElementById('targetLat').value = lat;
+                        document.getElementById('targetLng').value = lon;
+                    } else {
+                        alert("좌표를 불러오지 못했습니다. 다른 주소로 시도해 주세요.");
+                    }
+                })
+                .catch(err => alert("좌표 변환 실패: " + err));
+            }
+        }).open();
+    }
+
+    // [핵심] 현재 선택된 목적지 좌표를 주소 뒤에 실시간으로 매달아서 카톡방에 쏘는 함수
+    function shareKakao() {
+        const name = document.getElementById('targetName').value;
+        const lat = document.getElementById('targetLat').value;
+        const lng = document.getElementById('targetLng').value;
+
+        if (!name || !lat || !lng) {
+            alert("먼저 위의 버튼을 눌러 목적지를 선택해 주세요!");
+            return;
+        }
+
+        // 깃허브 진짜 주소 뒤에 실시간 좌표 파라미터를 붙여 전송 주소 생성
+        const shareUrl = `https://wavenumber12-cyber.github.io/navi/?name=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}`;
+
+        Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+                title: '📍 모여라 내비! 목적지 도착',
+                description: `목적지: ${name}\n이 링크를 눌러 원하시는 내비게이션을 선택하세요!`,
+                imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=500',
+                link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
+            },
+            buttons: [{
+                title: '내비 실행하러 가기',
+                link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
+            }],
+        });
+    }
+
+    // 내비게이션 앱 실행 로직 (최신 에러 보완 및 우회 버전)
     function openNavi(type) {
-        const info = getTargetInfo();
+        const name = document.getElementById('targetName').value;
+        const lat = document.getElementById('targetLat').value;
+        const lng = document.getElementById('targetLng').value;
+
+        if (!name || !lat || !lng) {
+            alert("길안내를 시작할 목적지가 없습니다.");
+            return;
+        }
 
         if (type === 'kakao') {
             try {
                 Kakao.Navi.start({
-                    name: info.name,
-                    x: parseFloat(info.lng),
-                    y: parseFloat(info.lat),
+                    name: name,
+                    x: parseFloat(lng),
+                    y: parseFloat(lat),
                     coordType: 'wgs84',
                 });
             } catch (err) {
-                console.error('카카오내비 실행 실패:', err);
-                alert('카카오내비 실행 중 오류가 발생했습니다. 앱이 설치되어 있는지 확인해 주세요.');
+                alert('카카오내비 실행 실패. 앱 설치 여부를 확인하세요.');
             }
             return;
         } 
         
         let url = '';
         if (type === 'tmap') {
-            const encodedName = encodeURIComponent(info.name);
-            // 안드로이드와 아이폰 모두에서 티맵 앱을 가장 잘 깨우는 표준 호출 주소 규격입니다.
-            url = `tmap://route?rGoName=${encodedName}&rGoX=${info.lng}&rGoY=${info.lat}`;
+            url = `tmap://route?rGoName=${encodeURIComponent(name)}&rGoX=${lng}&rGoY=${lat}`;
         } else if (type === 'naver') {
-            url = `nmap://navigation?dname=${encodeURIComponent(info.name)}&dlat=${info.lat}&dlng=${info.lng}`;
+            url = `nmap://navigation?dname=${encodeURIComponent(name)}&dlat=${lat}&dlng=${lng}`;
         }
 
-        // 1. 먼저 앱 실행 시도
         window.location.href = url;
 
-        // 2. 만약 1.5초 이내에 티맵 앱이 실행되지 않았다면 모바일 웹 길찾기로 강제 우회시킵니다.
-        // 앱이 설치되지 않았거나 안 열릴 때의 안전장치
         setTimeout(() => {
             if (type === 'tmap') {
-                // 에러가 나는 API 대신 누구나 즉시 사용 가능한 티맵 모바일 웹 길찾기 페이지로 우회합니다.
-                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(info.name)}&ex=${info.lng}&ey=${info.lat}`;
-                
-                if (confirm('티맵 앱이 실행되지 않았습니다. 대체 지도로 길안내를 확인하시겠습니까?')) {
+                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(name)}&ex=${lng}&ey=${lat}`;
+                if (confirm('티맵 앱이 실행되지 않았습니다. 대체 지도로 안내받으시겠습니까?')) {
                     window.location.href = fallbackUrl;
                 }
-            } else if (type === 'naver') {
-                window.location.href = "https://m.map.naver.com";
             }
         }, 1500);
     }
-
-    // 카카오톡을 통해 링크를 받아 들어왔을 때 자동으로 해당 목적지를 입력창에 채워주는 로직
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const nameParam = urlParams.get('name');
-        const latParam = urlParams.get('lat');
-        const lngParam = urlParams.get('lng');
-
-        if (nameParam && latParam && lngParam) {
-            document.getElementById('placeName').value = nameParam;
-            document.getElementById('latitude').value = latParam;
-            document.getElementById('longitude').value = lngParam;
-            
-            alert(`📍 전달받은 목적지 [${nameParam}]가 자동 세팅되었습니다!\n아래 원하는 내비게이션을 눌러 출발하세요.`);
-        }
-    }
 </script>
+
 </body>
 </html>
