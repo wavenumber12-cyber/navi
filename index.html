@@ -36,7 +36,7 @@
         .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; }
         .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
         .tmap-btn { background-color: #ff5000; }
-        .naver-btn { background-color: #03c75a; } /* 확실한 초록색 고정 */
+        .naver-btn { background-color: #03c75a; }
         
         /* 커스텀 오버레이 스타일 (테두리 없는 깔끔한 글 상자) */
         .custom-label {
@@ -312,14 +312,14 @@
         
         let url = '';
         if (type === 'tmap') {
-            const safeName = "목적지"; 
+            // 💡 회원님의 멋진 아이디어 반영: 주행 강제 모드 대신 안전한 '주소 자동 검색 창 팝업' 구조로 우회
+            // 사용자가 선택한 정제 주소명을 티맵 검색란에 자동으로 찔러 넣어 줍니다.
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isAndroid) {
-                // 💡 최종 해결: 일부 브라우저 필터와 파라미터 꼬임을 차단하는 강제 모바일 우회 표준 딥링크 셋업
-                url = `intent://tmap/route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;B.show_route=true;end`;
+                url = `intent://tmap/search?name=${encodeURIComponent(selectedName)}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
             } else {
-                url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+                url = `tmap://search?name=${encodeURIComponent(selectedName)}`;
             }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
