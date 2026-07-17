@@ -229,8 +229,8 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 티맵 수정: 이름을 인코딩하지 않고 그대로 전달해야 목적지가 정상 설정됩니다.
-            url = `tmap://route?rGoName=${info.name}&rGoX=${info.lng}&rGoY=${info.lat}`;
+            // 이 새로운 2줄로 기존 tmap 코드를 대체합니다.
+            url = `tmap://route?rGoName=${encodeURIComponent(info.name)}&rGoX=${info.lng}&rGoY=${info.lat}`;
         } else if (type === 'naver') {
             // 네이버지도 (기존 정상 작동 방식 유지)
             url = `nmap://navigation?dname=${encodeURIComponent(info.name)}&dlat=${info.lat}&dlng=${info.lng}`;
