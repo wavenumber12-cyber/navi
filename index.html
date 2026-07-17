@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
+    <title>여기로 Go Go ~</title>
     <!-- 스마트폰 홈 화면 아이콘 설정 -->
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
     <link rel="icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
@@ -36,7 +36,7 @@
         .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; }
         .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
         .tmap-btn { background-color: #ff5000; }
-        .never-btn { background-color: #03c75a; }
+        .naver-btn { background-color: #03c75a; } /* 확실한 초록색 고정 */
         
         /* 커스텀 오버레이 스타일 (테두리 없는 깔끔한 글 상자) */
         .custom-label {
@@ -59,7 +59,7 @@
 <body>
 
 <div class="container">
-    <h2>📍 지도에서 핀 꽂고 모여라!</h2>
+    <h2>📍 여기로 Go Go ~</h2>
     <p>지도를 터치하여 목적지를 지정하고 공유해 보세요.</p>
 
     <!-- 카카오 지도가 그려지는 영역 -->
@@ -282,7 +282,7 @@
         Kakao.Share.sendDefault({
             objectType: 'feed',
             content: {
-                title: '📍 모여라 내비! 목적지 공유',
+                title: '📍 여기로 Go Go ~',
                 description: `목적지: ${selectedName}\n위 링크를 눌러 원하시는 내비를 골라 이동하세요!`,
                 imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=500',
                 link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
@@ -316,11 +316,9 @@
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isAndroid) {
-                // 💡 [100% 무조건 성공 버전] 서버 Key를 거치지 않고 안드로이드 모바일 크롬/삼성인터넷 시스템을 통해 
-                // 단말기에 설치된 티맵 목적지 화면을 '직접 강제 실행'하는 최고 안정성 인텐트 규격입니다.
-                url = `intent://tmap/route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+                // 💡 최종 해결: 일부 브라우저 필터와 파라미터 꼬임을 차단하는 강제 모바일 우회 표준 딥링크 셋업
+                url = `intent://tmap/route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;B.show_route=true;end`;
             } else {
-                // 아이폰 등 iOS 기기는 다이렉트 호출 스키마 사용
                 url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
             }
         } else if (type === 'naver') {
