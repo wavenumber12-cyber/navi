@@ -58,7 +58,7 @@
 
 <script>
     // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
-    Kakao.init('e362e2f6732ec4e3be0a91ec878ea9b3'); 
+    Kakao.init('e362e2f6732ecf112d8751219e8d3d61');
 
     // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
@@ -139,7 +139,7 @@
     function loadKakaoMapScript() {
         const script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services&autoload=false';
+        script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ecf112d8751219e8d3d61&libraries=services&autoload=false';
         
         script.onload = function() {
             kakao.maps.load(function() {
