@@ -38,8 +38,22 @@
         .tmap-btn { background-color: #ff5000; }
         .naver-btn { background-color: #03c75a; }
         
-        /* 마커 위에 뜨는 글씨(인포윈도우) 스타일 정돈 */
-        .custom-infowindow { padding: 5px 10px; font-size: 12px; font-weight: bold; text-align: center; background: white; border-radius: 5px; border: 1px solid #ccc; }
+        /* 📍 지저분한 기본 말풍선을 완전히 지우고, 화살표 밑에 이쁘게 글씨만 뜨도록 커스텀 오버레이 스타일 지정 */
+        .custom-label {
+            position: relative;
+            bottom: 43px; /* 핀 이미지 바로 위로 글씨 상자 올리기 */
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            border-bottom: 2px solid #ddd;
+            background-color: #fff;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 0px 1px 3px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
@@ -58,7 +72,7 @@
         <div style="font-size: 11px; color: #adb5bd; margin-top: 5px;" id="targetCoords"></div>
     </div>
 
-    <!-- 공유 버튼 그룹 (요청사항 반영) -->
+    <!-- 공유 버튼 그룹 -->
     <div class="share-group">
         <button class="btn-share btn-kakao-dest" onclick="shareKakao()">💬 목적지 단체방에 공유하기</button>
         <button class="btn-share btn-my-loc" onclick="setMyPositionAsDestination()">🔵 내 위치 공유하기 (목적지로 설정)</button>
@@ -89,9 +103,9 @@
 
     let map;
     let destMarker; // 목적지 마커 (빨간색)
-    let destInfoWindow; // 목적지 말풍선
+    let destOverlay; // 목적지 글씨 표시 레이블
     let myLocationMarker; // 내위치 마커 (파란색)
-    let myInfoWindow; // 내위치 말풍선
+    let myLocationOverlay; // 내위치 글씨 표시 레이블
     let geocoder;
 
     // 카카오 지도를 실제로 그리는 함수
@@ -128,11 +142,13 @@
             map: map
         });
 
-        // "목적지" 글씨 노출용 인포윈도우 생성
-        destInfoWindow = new kakao.maps.InfoWindow({
-            content: '<div class="custom-infowindow">목적지</div>'
+        // 📍 뒤에 남는 커다란 말풍선 백업 보드를 없애기 위해, CustomOverlay로 완전 교체
+        destOverlay = new kakao.maps.CustomOverlay({
+            position: map.getCenter(),
+            content: '<div class="custom-label">목적지</div>',
+            yAnchor: 1 // 마커 바로 위에 알맞게 안착되도록 기준값 세팅
         });
-        destInfoWindow.open(map, destMarker);
+        destOverlay.setMap(map);
 
         if (name && lat && lng) {
             document.getElementById('targetAddr').innerText = selectedName;
@@ -146,7 +162,7 @@
             });
         }
 
-        // 2. [내 위치 마커 세팅] 파란색 핀 및 "내위치" 글씨 적용
+        // 2. [내 위치 마커 세팅] 파란색 핀 및 테두리 없는 깔끔한 글씨 적용
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 myCurrentLat = position.coords.latitude;
@@ -163,17 +179,19 @@
                     map: map
                 });
 
-                // "내위치" 글씨 노출용 인포윈도우 생성
-                myInfoWindow = new kakao.maps.InfoWindow({
-                    content: '<div class="custom-infowindow">내위치</div>'
+                // 📍 내 위치도 지저분한 말풍선을 없애고 오버레이 글씨로 완전 수정
+                myLocationOverlay = new kakao.maps.CustomOverlay({
+                    position: currentPos,
+                    content: '<div class="custom-label">내위치</div>',
+                    yAnchor: 1
                 });
-                myInfoWindow.open(map, myLocationMarker);
+                myLocationOverlay.setMap(map);
 
                 // 공유 링크가 아닌 일반 첫 접속일 때 지도의 중심을 내 위치로 잡고 목적지 핀도 같이 정렬합니다.
                 if (!name && !lat && !lng) {
                     map.setCenter(currentPos);
                     destMarker.setPosition(currentPos);
-                    destInfoWindow.open(map, destMarker);
+                    destOverlay.setPosition(currentPos);
                     
                     selectedLat = myCurrentLat;
                     selectedLng = myCurrentLng;
@@ -195,7 +213,7 @@
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
             destMarker.setPosition(latlng);
-            destInfoWindow.open(map, destMarker); // 말풍선도 핀 따라 이동
+            destOverlay.setPosition(latlng); // 글자 박스도 마커를 정확하게 따라가도록 동기화
 
             selectedLat = latlng.getLat();
             selectedLng = latlng.getLng();
@@ -228,7 +246,7 @@
         const myPos = new kakao.maps.LatLng(myCurrentLat, myCurrentLng);
         map.setCenter(myPos);
         destMarker.setPosition(myPos);
-        destInfoWindow.open(map, destMarker);
+        destOverlay.setPosition(myPos);
 
         selectedLat = myCurrentLat;
         selectedLng = myCurrentLng;
@@ -282,7 +300,7 @@
         });
     }
 
-    // 내비 앱 연결 (안드로이드 보안 우회 인텐트 포함 최신 보완 버전)
+    // 내비 앱 연결
     function openNavi(type) {
         if (type === 'kakao') {
             try {
@@ -304,10 +322,11 @@
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isAndroid) {
-                // 안드로이드 브라우저 규격 우회 강제 실행 코드 적용
-                url = `intent://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+                // 💡 최신 표준 규격 통합: intent 방식으로 Tmap의 목적지 및 좌표 검색 통합 호출
+                url = `intent://search?name=${encodeURIComponent(safeName)}&lat=${selectedLat}&lon=${selectedLng}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
             } else {
-                url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+                // 아이폰 등 기타 기기는 기본 스키마 통합 규격으로 호출
+                url = `tmap://search?name=${encodeURIComponent(safeName)}&lat=${selectedLat}&lon=${selectedLng}`;
             }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
