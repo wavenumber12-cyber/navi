@@ -6,8 +6,6 @@
     <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
     <!-- 카카오 SDK 로드 (공유 기능용) -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
-    <!-- 카카오 지도 API 로드 (회원님의 Key 사용, 비동기 autoload 해제) -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 10px; display: flex; justify-content: center; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 430px; text-align: center; box-sizing: border-box; }
@@ -71,11 +69,10 @@
     let marker;
     let geocoder;
 
-    // 카카오 지도를 그리는 핵심 함수
+    // 카카오 지도를 실제로 그리는 핵심 로직
     function drawMap() {
         const mapContainer = document.getElementById('map');
         
-        // URL 매개변수 확인 (공유받은 좌표 처리)
         const urlParams = new URLSearchParams(window.location.search);
         const name = urlParams.get('name');
         const lat = urlParams.get('lat');
@@ -128,26 +125,37 @@
                 }
             });
         });
-    }
 
-    // 문서 로딩이 완료되면 즉시 지도 생성 실행
-    // 수정된 코드
-window.onload = function() {
-    if (typeof kakao !== 'undefined' && kakao.maps) {
-        drawMap();
-
-        // 지도가 그려진 후 0.2초 뒤에 크기를 강제로 재설정하여 화면에 나타나게 만듭니다.
+        // 렌더링 꼬임 방지를 위한 화면 레이아웃 리프레시 보장
         setTimeout(function() {
             if (map) {
                 map.relayout();
                 map.setCenter(new kakao.maps.LatLng(selectedLat, selectedLng));
             }
-        }, 200);
-
-    } else {
-        alert("카카오 지도 라이브러리를 불러오지 못했습니다. 카카오 개발자 센터의 '제품 설정 > 카카오맵' 상태가 ON으로 켜져 있는지 꼭 확인해 주세요!");
+        }, 100);
     }
-};
+
+    // 💡 핵심: 브라우저가 지도를 완벽하게 가져올 수 있도록 스크립트를 동적으로 안전 주입하는 로직
+    function loadKakaoMapScript() {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        // 비동기 통신을 원활하게 뚫어주는 공식 스크립트 규격
+        script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services&autoload=false';
+        
+        script.onload = function() {
+            // 카카오 지도 내장 모듈이 완벽히 로딩을 끝낼 때까지 대기 후 실행
+            kakao.maps.load(function() {
+                drawMap();
+            });
+        };
+        
+        document.head.appendChild(script);
+    }
+
+    // 문서 준비가 완료되는 즉시 카카오 맵 엔진 로드 시작
+    window.onload = function() {
+        loadKakaoMapScript();
+    };
 
     // [공유하기] 카톡 링크 전송
     function shareKakao() {
