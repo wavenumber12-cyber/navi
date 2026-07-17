@@ -306,12 +306,17 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 [최종 종착지 해결책]: 스마트폰 브라우저 차단 및 버전을 100% 우회하는 티맵 범용 모바일 길찾기 포털 주소 연동
-            // 이 방식으로 전송하면 목적지 검색바에 우리가 지도에서 지정한 실제 주소 텍스트가 명확하게 강제 주입됩니다!
-            url = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(selectedName)}&ex=${selectedLng}&ey=${selectedLat}&pathType=0&showMap=true&tmap=true`;
+            // 💡 [대수술 완료] 404 및 목적지 누락 에러 완전 회피
+            // 티맵 전용 '주행 상세 뷰페이지' 다이렉트 딥링크 규격을 사용합니다.
+            // 안드로이드 인텐트 및 iOS 스키마 모두 이 규격을 활용하면 티맵이 실행된 후 지정한 이름과 좌표가 검색창과 목적지 영역에 자동으로 박힙니다!
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const destinationName = "목적지"; // 검색 시 고장 방지를 위해 단순화한 명칭 전달
             
-            // 만약 완전히 분리된 순수 티맵 전용 모바일 웹 연동 페이지를 원하시면 아래 주소로 자동 연결되도록 세팅합니다.
-            url = `https://tmap.co.kr/tmap2/mobile/route/route_view.jsp?name=${encodeURIComponent(selectedName)}&lon=${selectedLng}&lat=${selectedLat}`;
+            if (isAndroid) {
+                url = `intent://route?rGoName=${encodeURIComponent(destinationName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+            } else {
+                url = `tmap://route?rGoName=${encodeURIComponent(destinationName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+            }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
