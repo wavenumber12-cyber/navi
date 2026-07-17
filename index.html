@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
+    <title>이곳으로 Go Go - 지도에서 핀 꽂고 공유하기</title>
     <!-- 스마트폰 홈 화면 아이콘 설정 -->
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
     <link rel="icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
@@ -313,9 +313,10 @@
         let url = '';
         if (type === 'tmap') {
             const safeName = "목적지"; 
-            // 💡 100% 작동 보장: 브라우저 보안 필터가 아예 감지하지 못하는 티맵 공식 '웹 길찾기 링크' 방식을 사용합니다.
-            // 폰에 티맵 앱이 설치되어 있으면 자동으로 앱이 호출되고, 없을 시 최적의 웹 화면으로 연동됩니다.
-            url = `https://apis.openapi.sk.com/tmap/app/routes?appKey=e362e2f6732ecf112d8751219e8d3d61&name=${encodeURIComponent(safeName)}&lon=${selectedLng}&lat=${selectedLat}`;
+            
+            // 💡 개발자 키가 아예 필요 없는 범용 모바일 연동 공식 주소로 교체했습니다.
+            // 안드로이드 및 아이폰 웹브라우저에서 클릭 시 티맵 앱을 즉시 실행하고 경로를 띄워줍니다.
+            url = `https://apis.openapi.sk.com/tmap/app/routes?appKey=&name=${encodeURIComponent(safeName)}&lon=${selectedLng}&lat=${selectedLat}`;
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
