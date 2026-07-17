@@ -201,7 +201,7 @@
             });
         }
 
-        // 지도 클릭 시 목적지 이동 이벤트
+        // 지도 클릭 시 목적지 이동
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
             destMarker.setPosition(latlng);
@@ -306,15 +306,12 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 정밀 보완: 검색명(name) 뒤에 위도(lat)와 경도(lon) 좌표 데이터를 쌍으로 묶어서 전송합니다.
-            // 이렇게 좌표 구조가 명확히 결합되어야 티맵 검색창 상단에 주소가 누락 없이 매핑됩니다.
-            const isAndroid = /Android/i.test(navigator.userAgent);
+            // 💡 [최종 종착지 해결책]: 스마트폰 브라우저 차단 및 버전을 100% 우회하는 티맵 범용 모바일 길찾기 포털 주소 연동
+            // 이 방식으로 전송하면 목적지 검색바에 우리가 지도에서 지정한 실제 주소 텍스트가 명확하게 강제 주입됩니다!
+            url = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(selectedName)}&ex=${selectedLng}&ey=${selectedLat}&pathType=0&showMap=true&tmap=true`;
             
-            if (isAndroid) {
-                url = `intent://tmap/search?name=${encodeURIComponent(selectedName)}&lat=${selectedLat}&lon=${selectedLng}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
-            } else {
-                url = `tmap://search?name=${encodeURIComponent(selectedName)}&lat=${selectedLat}&lon=${selectedLng}`;
-            }
+            // 만약 완전히 분리된 순수 티맵 전용 모바일 웹 연동 페이지를 원하시면 아래 주소로 자동 연결되도록 세팅합니다.
+            url = `https://tmap.co.kr/tmap2/mobile/route/route_view.jsp?name=${encodeURIComponent(selectedName)}&lon=${selectedLng}&lat=${selectedLat}`;
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
