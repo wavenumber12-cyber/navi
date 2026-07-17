@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
-    <!-- 카카오 SDK 로드 -->
+    <!-- 카카오 SDK 로드 (공유 기능용) -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+    <!-- 카카오 지도 API 로드 (회원님의 Key 사용, 비동기 autoload 해제) -->
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 10px; display: flex; justify-content: center; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 430px; text-align: center; box-sizing: border-box; }
@@ -56,12 +58,9 @@
     </div>
 </div>
 
-<!-- 카카오 지도 API 로드 (보안 및 프로토콜 규격 완전 신뢰 주소로 적용) -->
-<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=832822a15fcf80a30704eb8627ec710f&libraries=services"></script>
-
 <script>
-    // 카카오 JavaScript SDK 초기화 (공유용)
-    Kakao.init('832822a15fcf80a30704eb8627ec710f'); 
+    // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
+    Kakao.init('e362e2f6732ec4e3be0a91ec878ea9b3'); 
 
     // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
@@ -72,11 +71,11 @@
     let marker;
     let geocoder;
 
-    // 카카오 지도를 그리는 진짜 함수
+    // 카카오 지도를 그리는 핵심 함수
     function drawMap() {
         const mapContainer = document.getElementById('map');
         
-        // URL 매개변수 확인
+        // URL 매개변수 확인 (공유받은 좌표 처리)
         const urlParams = new URLSearchParams(window.location.search);
         const name = urlParams.get('name');
         const lat = urlParams.get('lat');
@@ -113,7 +112,7 @@
             });
         }
 
-        // 지도 클릭 이벤트
+        // 지도 클릭 이벤트 등록
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
             marker.setPosition(latlng);
@@ -131,12 +130,12 @@
         });
     }
 
-    // 문서가 준비되면 지도를 바로 로드하도록 실행 지점 단순화
+    // 문서 로딩이 완료되면 즉시 지도 생성 실행
     window.onload = function() {
         if (typeof kakao !== 'undefined' && kakao.maps) {
-            kakao.maps.load(drawMap);
+            drawMap();
         } else {
-            console.error("카카오 맵 로드에 실패했습니다.");
+            alert("카카오 지도 라이브러리를 불러오지 못했습니다. 카카오 개발자 센터의 '제품 설정 > 카카오맵' 상태가 ON으로 켜져 있는지 꼭 확인해 주세요!");
         }
     };
 
