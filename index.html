@@ -8,6 +8,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
+    <!-- 스마트폰 홈 화면 아이콘 설정 (원하는 이미지 주소나 파일명을 입력하세요) -->
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
+    <link rel="icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
     <!-- 카카오 SDK 로드 (공유 기능용) -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
     <style>
@@ -62,7 +65,7 @@
 
 <script>
     // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
-    Kakao.init('e362e2f6732ecf112d8751219e8d3d61');
+    Kakao.init('e362e2f6732ecf112d8751219e8d3d61'); 
 
     // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
@@ -73,7 +76,6 @@
     let marker;
     let geocoder;
 
-    // 카카오 지도를 실제로 그리는 함수
     // 카카오 지도를 실제로 그리는 함수
     function drawMap() {
         const mapContainer = document.getElementById('map');
@@ -114,7 +116,7 @@
             });
         }
 
-        // 📍 [추가된 기능] 사용자의 실제 "현재 위치"를 찾아 지도에 표시하기
+        // [추가 기능] 사용자의 실제 "현재 위치"를 찾아 지도에 표시하기
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 const currentLat = position.coords.latitude;
@@ -122,7 +124,7 @@
                 const currentPos = new kakao.maps.LatLng(currentLat, currentLng);
 
                 // 현재 위치에 표시할 파란색 원형 이미지 마커 설정
-                const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'; // 원형 마커 이미지
+                const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'; 
                 const imageSize = new kakao.maps.Size(24, 35); 
                 const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
 
@@ -133,12 +135,11 @@
                     map: map
                 });
 
-                // 처음 접속했을 때, 만약 공유받은 목적지가 없는 상태라면 지도의 중심을 내 현재 위치로 이동시킵니다.
+                // 처음 접속했을 때 공유받은 위치가 없다면 지도의 중심을 내 현재 위치로 이동시킵니다.
                 if (!name && !lat && !lng) {
                     map.setCenter(currentPos);
-                    marker.setPosition(currentPos); // 목적지 핀도 내 위치로 세팅
+                    marker.setPosition(currentPos);
                     
-                    // 주소 정보 업데이트
                     geocoder.coord2Address(currentLng, currentLat, function(result, status) {
                         if (status === kakao.maps.services.Status.OK) {
                             selectedName = result[0].address.address_name;
@@ -217,7 +218,7 @@
         });
     }
 
-   // 내비 앱 연결 함수 (티맵 보완 버전)
+    // 내비 앱 연결
     function openNavi(type) {
         if (type === 'kakao') {
             try {
@@ -235,26 +236,22 @@
         
         let url = '';
         if (type === 'tmap') {
-        // 주소가 너무 길면 티맵이 폭발하므로, 전달할 목적지명을 깔끔하게 "목적지"로 고정하여 안전하게 전달합니다.
-        const safeName = "목적지";
-        url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+            // 주소가 너무 길면 티맵이 오작동하므로, 전달할 목적지명을 깔끔하게 "목적지"로 고정하여 안전하게 전달합니다.
+            const safeName = "목적지"; 
+            url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
         } else if (type === 'naver') {
-        url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`
-        }
-        
-        window.location.href = url;
+            url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
 
-        
+        window.location.href = url;
 
         setTimeout(() => {
             if (type === 'tmap') {
                 const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(selectedName)}&ex=${selectedLng}&ey=${selectedLat}`;
-                // 스마트폰 환경에서 팝업이 너무 자주 뜨는 것을 방지하기 위해 confirm 대신 로그나 부드러운 전환 처리 가능
                 console.log("티맵 앱 실행 시도 완료");
             }
         }, 1500);
-    } 
+    }
 
     // 페이지 로드가 끝나면 카카오 지도 스크립트 실행 시작
     window.onload = function() {
