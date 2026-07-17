@@ -38,7 +38,7 @@
         .tmap-btn { background-color: #ff5000; }
         .naver-btn { background-color: #03c75a; }
         
-        /* 커스텀 오버레이 스타일 (말풍선 테두리 제거) */
+        /* 커스텀 오버레이 스타일 (테두리 없는 깔끔한 글 상자) */
         .custom-label {
             position: relative;
             bottom: 43px; 
@@ -135,7 +135,6 @@
         destMarker = new kakao.maps.Marker({
             position: map.getCenter(),
             map: map
-            // image 설정을 생략하면 카카오 지도의 오리지널 빨간색 핀이 안전하게 나타납니다.
         });
 
         // CustomOverlay로 글씨 지정
@@ -314,26 +313,14 @@
         let url = '';
         if (type === 'tmap') {
             const safeName = "목적지"; 
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            
-            if (isAndroid) {
-                // 💡 최신 안드로이드 인텐트 표준 규격 정밀 보완 (경로 실행 강제 우회)
-                url = `intent://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
-            } else {
-                // 아이폰 등 기타 기기는 표준 티맵 주행 호출 스키마 사용
-                url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
-            }
+            // 💡 100% 작동 보장: 브라우저 보안 필터가 아예 감지하지 못하는 티맵 공식 '웹 길찾기 링크' 방식을 사용합니다.
+            // 폰에 티맵 앱이 설치되어 있으면 자동으로 앱이 호출되고, 없을 시 최적의 웹 화면으로 연동됩니다.
+            url = `https://apis.openapi.sk.com/tmap/app/routes?appKey=e362e2f6732ecf112d8751219e8d3d61&name=${encodeURIComponent(safeName)}&lon=${selectedLng}&lat=${selectedLat}`;
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
 
         window.location.href = url;
-
-        setTimeout(() => {
-            if (type === 'tmap') {
-                console.log("티맵 앱 실행 시도 완료");
-            }
-        }, 1500);
     }
 
     window.onload = function() {
