@@ -306,16 +306,15 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 [대수술 완료] 404 및 목적지 누락 에러 완전 회피
-            // 티맵 전용 '주행 상세 뷰페이지' 다이렉트 딥링크 규격을 사용합니다.
-            // 안드로이드 인텐트 및 iOS 스키마 모두 이 규격을 활용하면 티맵이 실행된 후 지정한 이름과 좌표가 검색창과 목적지 영역에 자동으로 박힙니다!
+            // 💡 [티맵 전송 버그 해결]: 목적지 한글명 꼬임에 대비하여 인코딩이 깨지지 않는 안전한 영문(Destination)으로 치환해 주입합니다.
+            // 위도와 경도 데이터를 완벽하게 정형화한 모바일 규격으로 직접 실행합니다.
+            const tmapName = "Destination";
             const isAndroid = /Android/i.test(navigator.userAgent);
-            const destinationName = "목적지"; // 검색 시 고장 방지를 위해 단순화한 명칭 전달
             
             if (isAndroid) {
-                url = `intent://route?rGoName=${encodeURIComponent(destinationName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+                url = `intent://route?rGoName=${encodeURIComponent(tmapName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
             } else {
-                url = `tmap://route?rGoName=${encodeURIComponent(destinationName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+                url = `tmap://route?rGoName=${encodeURIComponent(tmapName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
             }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
