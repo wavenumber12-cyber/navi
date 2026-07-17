@@ -69,7 +69,7 @@
     let marker;
     let geocoder;
 
-    // 카카오 지도를 실제로 그리는 핵심 로직
+    // 카카오 지도를 실제로 그리는 함수
     function drawMap() {
         const mapContainer = document.getElementById('map');
         
@@ -126,7 +126,7 @@
             });
         });
 
-        // 렌더링 꼬임 방지를 위한 화면 레이아웃 리프레시 보장
+        // 레이아웃 새로고침
         setTimeout(function() {
             if (map) {
                 map.relayout();
@@ -135,15 +135,13 @@
         }, 100);
     }
 
-    // 💡 핵심: 브라우저가 지도를 완벽하게 가져올 수 있도록 스크립트를 동적으로 안전 주입하는 로직
+    // 카카오 지도 스크립트를 동적으로 안전하게 불러오는 함수
     function loadKakaoMapScript() {
         const script = document.createElement('script');
         script.type = 'text/javascript';
-        // 비동기 통신을 원활하게 뚫어주는 공식 스크립트 규격
         script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services&autoload=false';
         
         script.onload = function() {
-            // 카카오 지도 내장 모듈이 완벽히 로딩을 끝낼 때까지 대기 후 실행
             kakao.maps.load(function() {
                 drawMap();
             });
@@ -151,11 +149,6 @@
         
         document.head.appendChild(script);
     }
-
-    // 문서 준비가 완료되는 즉시 카카오 맵 엔진 로드 시작
-    window.onload = function() {
-        loadKakaoMapScript();
-    };
 
     // [공유하기] 카톡 링크 전송
     function shareKakao() {
@@ -213,12 +206,13 @@
                     window.location.href = fallbackUrl;
                 }
             }
-}, 1500);
+        }, 1500);
+    }
 
-window.onload = function() {
-loadKakaoMapScript();
-};
-
+    // 페이지 로드가 끝나면 카카오 지도 스크립트 실행 시작
+    window.onload = function() {
+        loadKakaoMapScript();
+    };
 </script>
 
 </body>
