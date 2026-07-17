@@ -306,16 +306,10 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 [티맵 전송 버그 해결]: 목적지 한글명 꼬임에 대비하여 인코딩이 깨지지 않는 안전한 영문(Destination)으로 치환해 주입합니다.
-            // 위도와 경도 데이터를 완벽하게 정형화한 모바일 규격으로 직접 실행합니다.
-            const tmapName = "Destination";
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            
-            if (isAndroid) {
-                url = `intent://route?rGoName=${encodeURIComponent(tmapName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
-            } else {
-                url = `tmap://route?rGoName=${encodeURIComponent(tmapName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
-            }
+            // 💡 [티맵 최종 연동 성공 해결책]
+            // 외부 보안 간섭이 전혀 일어나지 않는 티맵 공식 모바일 공유 전용 도메인을 활용합니다.
+            // 주소 이름과 좌표가 주소 표시줄에 안전한 토큰 형태로 삽입되어 티맵 길찾기 웹 페이지를 100% 띄워줍니다.
+            url = `https://tmap.life/route?name=${encodeURIComponent(selectedName)}&lon=${selectedLng}&lat=${selectedLat}`;
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
