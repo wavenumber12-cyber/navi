@@ -1,3 +1,7 @@
+<!-- 
+  Copyright 2026. wavenumber12-cyber All rights reserved.
+  이 프로그램의 소스코드를 무단 복제, 배포, 변형하여 사용하는 것을 금지합니다.
+-->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -70,6 +74,7 @@
     let geocoder;
 
     // 카카오 지도를 실제로 그리는 함수
+    // 카카오 지도를 실제로 그리는 함수
     function drawMap() {
         const mapContainer = document.getElementById('map');
         
@@ -106,6 +111,44 @@
                     selectedName = result[0].address.address_name;
                     document.getElementById('targetAddr').innerText = selectedName;
                 }
+            });
+        }
+
+        // 📍 [추가된 기능] 사용자의 실제 "현재 위치"를 찾아 지도에 표시하기
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const currentLat = position.coords.latitude;
+                const currentLng = position.coords.longitude;
+                const currentPos = new kakao.maps.LatLng(currentLat, currentLng);
+
+                // 현재 위치에 표시할 파란색 원형 이미지 마커 설정
+                const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'; // 원형 마커 이미지
+                const imageSize = new kakao.maps.Size(24, 35); 
+                const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+                // 현재 위치 마커 생성
+                const myLocationMarker = new kakao.maps.Marker({
+                    position: currentPos,
+                    image: markerImage,
+                    map: map
+                });
+
+                // 처음 접속했을 때, 만약 공유받은 목적지가 없는 상태라면 지도의 중심을 내 현재 위치로 이동시킵니다.
+                if (!name && !lat && !lng) {
+                    map.setCenter(currentPos);
+                    marker.setPosition(currentPos); // 목적지 핀도 내 위치로 세팅
+                    
+                    // 주소 정보 업데이트
+                    geocoder.coord2Address(currentLng, currentLat, function(result, status) {
+                        if (status === kakao.maps.services.Status.OK) {
+                            selectedName = result[0].address.address_name;
+                            document.getElementById('targetAddr').innerText = selectedName;
+                            document.getElementById('targetCoords').innerText = `위도: ${currentLat.toFixed(5)} / 경도: ${currentLng.toFixed(5)}`;
+                        }
+                    });
+                }
+            }, function(error) {
+                console.log("위치 정보를 가져오는 데 실패했습니다.", error);
             });
         }
 
@@ -192,17 +235,17 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 핵심 보완: 티맵이 특수문자나 긴 주소 형식에서 목적지를 놓치는 문제를 방지하기 위해
-            // 목적지 이름 뒤쪽의 상세 주소를 떼어내고 앞부분만 깔끔하게 정제하거나 안전하게 인코딩합니다.
-            let cleanName = selectedName.split(',')[0].trim(); 
-            
-            // 정제된 이름과 좌표를 티맵 모바일 앱 규격에 맞게 매핑
-            url = `tmap://route?rGoName=${encodeURIComponent(cleanName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+        // 주소가 너무 길면 티맵이 폭발하므로, 전달할 목적지명을 깔끔하게 "목적지"로 고정하여 안전하게 전달합니다.
+        const safeName = "목적지";
+        url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
         } else if (type === 'naver') {
-            url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
+        url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`
+        }
+        
+        window.location.href = url;
         }
 
-        window.location.href = url;
+        
 
         setTimeout(() => {
             if (type === 'tmap') {
