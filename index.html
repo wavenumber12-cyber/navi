@@ -8,10 +8,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
-    <!-- 스마트폰 홈 화면 아이콘 설정 (원하는 이미지 주소나 파일명을 입력하세요) -->
+    <!-- 스마트폰 홈 화면 아이콘 설정 -->
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
     <link rel="icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
-    <!-- 카카오 SDK 로드 (공유 기능용) -->
+    <!-- 카카오 SDK 로드 -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 10px; display: flex; justify-content: center; margin: 0; }
@@ -26,12 +26,20 @@
         .info-title { font-weight: bold; color: #495057; font-size: 14px; margin-bottom: 5px; }
         .info-desc { color: #868e96; font-size: 12px; word-break: break-all; }
         
-        .btn-kakao { width: 100%; background-color: #fee500; color: #191919; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 16px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* 버튼 그룹 배치 */
+        .share-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .btn-share { width: 100%; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-kakao-dest { background-color: #fee500; color: #191919; }
+        .btn-my-loc { background-color: #3498db; color: white; }
+        
         .navi-group { display: flex; gap: 8px; justify-content: space-between; }
         .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; }
         .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
         .tmap-btn { background-color: #ff5000; }
         .naver-btn { background-color: #03c75a; }
+        
+        /* 마커 위에 뜨는 글씨(인포윈도우) 스타일 정돈 */
+        .custom-infowindow { padding: 5px 10px; font-size: 12px; font-weight: bold; text-align: center; background: white; border-radius: 5px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -50,8 +58,11 @@
         <div style="font-size: 11px; color: #adb5bd; margin-top: 5px;" id="targetCoords"></div>
     </div>
 
-    <!-- 카카오톡 공유 버튼 -->
-    <button class="btn-kakao" onclick="shareKakao()">💬 이 위치 단체방에 공유하기</button>
+    <!-- 공유 버튼 그룹 (요청사항 반영) -->
+    <div class="share-group">
+        <button class="btn-share btn-kakao-dest" onclick="shareKakao()">💬 목적지 단체방에 공유하기</button>
+        <button class="btn-share btn-my-loc" onclick="setMyPositionAsDestination()">🔵 내 위치 공유하기 (목적지로 설정)</button>
+    </div>
 
     <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
 
@@ -64,16 +75,23 @@
 </div>
 
 <script>
-    // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
+    // 카카오 JavaScript SDK 초기화
     Kakao.init('e362e2f6732ecf112d8751219e8d3d61'); 
 
     // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
     let selectedLng = 126.978656;
     let selectedName = "지정된 목적지";
+    
+    // 내 실제 현재 위치 보관용 변수
+    let myCurrentLat = null;
+    let myCurrentLng = null;
 
     let map;
-    let marker;
+    let destMarker; // 목적지 마커 (빨간색)
+    let destInfoWindow; // 목적지 말풍선
+    let myLocationMarker; // 내위치 마커 (파란색)
+    let myInfoWindow; // 내위치 말풍선
     let geocoder;
 
     // 카카오 지도를 실제로 그리는 함수
@@ -99,10 +117,22 @@
         map = new kakao.maps.Map(mapContainer, mapOption);
         geocoder = new kakao.maps.services.Geocoder();
 
-        marker = new kakao.maps.Marker({
-            position: map.getCenter()
+        // 1. [목적지 마커 세팅] 빨간색 핀으로 설정
+        const destImgSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_red.png'; 
+        const destImgSize = new kakao.maps.Size(24, 35);
+        const destMarkerImage = new kakao.maps.MarkerImage(destImgSrc, destImgSize);
+
+        destMarker = new kakao.maps.Marker({
+            position: map.getCenter(),
+            image: destMarkerImage,
+            map: map
         });
-        marker.setMap(map);
+
+        // "목적지" 글씨 노출용 인포윈도우 생성
+        destInfoWindow = new kakao.maps.InfoWindow({
+            content: '<div class="custom-infowindow">목적지</div>'
+        });
+        destInfoWindow.open(map, destMarker);
 
         if (name && lat && lng) {
             document.getElementById('targetAddr').innerText = selectedName;
@@ -116,35 +146,43 @@
             });
         }
 
-        // [추가 기능] 사용자의 실제 "현재 위치"를 찾아 지도에 표시하기
+        // 2. [내 위치 마커 세팅] 파란색 핀 및 "내위치" 글씨 적용
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
-                const currentLat = position.coords.latitude;
-                const currentLng = position.coords.longitude;
-                const currentPos = new kakao.maps.LatLng(currentLat, currentLng);
+                myCurrentLat = position.coords.latitude;
+                myCurrentLng = position.coords.longitude;
+                const currentPos = new kakao.maps.LatLng(myCurrentLat, myCurrentLng);
 
-                // 현재 위치에 표시할 파란색 원형 이미지 마커 설정
-                const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'; 
-                const imageSize = new kakao.maps.Size(24, 35); 
-                const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+                const myImgSrc = 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png'; 
+                const myImgSize = new kakao.maps.Size(24, 35); 
+                const myMarkerImage = new kakao.maps.MarkerImage(myImgSrc, myImgSize);
 
-                // 현재 위치 마커 생성
-                const myLocationMarker = new kakao.maps.Marker({
+                myLocationMarker = new kakao.maps.Marker({
                     position: currentPos,
-                    image: markerImage,
+                    image: myMarkerImage,
                     map: map
                 });
 
-                // 처음 접속했을 때 공유받은 위치가 없다면 지도의 중심을 내 현재 위치로 이동시킵니다.
+                // "내위치" 글씨 노출용 인포윈도우 생성
+                myInfoWindow = new kakao.maps.InfoWindow({
+                    content: '<div class="custom-infowindow">내위치</div>'
+                });
+                myInfoWindow.open(map, myLocationMarker);
+
+                // 공유 링크가 아닌 일반 첫 접속일 때 지도의 중심을 내 위치로 잡고 목적지 핀도 같이 정렬합니다.
                 if (!name && !lat && !lng) {
                     map.setCenter(currentPos);
-                    marker.setPosition(currentPos);
+                    destMarker.setPosition(currentPos);
+                    destInfoWindow.open(map, destMarker);
                     
-                    geocoder.coord2Address(currentLng, currentLat, function(result, status) {
+                    selectedLat = myCurrentLat;
+                    selectedLng = myCurrentLng;
+
+                    geocoder.coord2Address(myCurrentLng, myCurrentLat, function(result, status) {
                         if (status === kakao.maps.services.Status.OK) {
                             selectedName = result[0].address.address_name;
                             document.getElementById('targetAddr').innerText = selectedName;
-                            document.getElementById('targetCoords').innerText = `위도: ${currentLat.toFixed(5)} / 경도: ${currentLng.toFixed(5)}`;
+                            document.getElementById('targetCoords').innerText = `위도: ${myCurrentLat.toFixed(5)} / 경도: ${myCurrentLng.toFixed(5)}`;
                         }
                     });
                 }
@@ -153,10 +191,11 @@
             });
         }
 
-        // 지도 클릭 이벤트 등록
+        // 지도 클릭 시 목적지(빨간 핀) 이동 이벤트 등록
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
-            marker.setPosition(latlng);
+            destMarker.setPosition(latlng);
+            destInfoWindow.open(map, destMarker); // 말풍선도 핀 따라 이동
 
             selectedLat = latlng.getLat();
             selectedLng = latlng.getLng();
@@ -179,7 +218,32 @@
         }, 100);
     }
 
-    // 카카오 지도 스크립트를 동적으로 안전하게 불러오는 함수
+    // [내 위치 공유하기] 버튼 클릭 시 내 위치를 목적지로 강제 셋팅하는 함수
+    function setMyPositionAsDestination() {
+        if (!myCurrentLat || !myCurrentLng) {
+            alert("아직 현재 위치 정보를 불러오지 못했습니다. 잠시 후 다시 시도하거나 위치 권한 허용을 확인해 주세요.");
+            return;
+        }
+
+        const myPos = new kakao.maps.LatLng(myCurrentLat, myCurrentLng);
+        map.setCenter(myPos);
+        destMarker.setPosition(myPos);
+        destInfoWindow.open(map, destMarker);
+
+        selectedLat = myCurrentLat;
+        selectedLng = myCurrentLng;
+
+        geocoder.coord2Address(myCurrentLng, myCurrentLat, function(result, status) {
+            if (status === kakao.maps.services.Status.OK) {
+                selectedName = result[0].address.address_name;
+                document.getElementById('targetAddr').innerText = selectedName;
+                document.getElementById('targetCoords').innerText = `위도: ${selectedLat.toFixed(5)} / 경도: ${selectedLng.toFixed(5)}`;
+                alert("내 현재 위치가 목적지로 지정되었습니다. 이제 상단의 공유 버튼을 눌러 공유하실 수 있습니다!");
+            }
+        });
+    }
+
+    // 카카오 지도 스크립트 동적 로드
     function loadKakaoMapScript() {
         const script = document.createElement('script');
         script.type = 'text/javascript';
@@ -197,7 +261,7 @@
     // [공유하기] 카톡 링크 전송
     function shareKakao() {
         if (!selectedName || !selectedLat || !selectedLng) {
-            alert("지도를 클릭해서 목적지를 먼저 지정해 주세요!");
+            alert("목적지를 먼저 지정해 주세요!");
             return;
         }
 
@@ -218,7 +282,7 @@
         });
     }
 
-    // 내비 앱 연결
+    // 내비 앱 연결 (안드로이드 보안 우회 인텐트 포함 최신 보완 버전)
     function openNavi(type) {
         if (type === 'kakao') {
             try {
@@ -236,9 +300,15 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 주소가 너무 길면 티맵이 오작동하므로, 전달할 목적지명을 깔끔하게 "목적지"로 고정하여 안전하게 전달합니다.
             const safeName = "목적지"; 
-            url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            if (isAndroid) {
+                // 안드로이드 브라우저 규격 우회 강제 실행 코드 적용
+                url = `intent://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+            } else {
+                url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+            }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
@@ -247,13 +317,11 @@
 
         setTimeout(() => {
             if (type === 'tmap') {
-                const fallbackUrl = `https://m.map.naver.com/route.nhn?menu=route&ename=${encodeURIComponent(selectedName)}&ex=${selectedLng}&ey=${selectedLat}`;
                 console.log("티맵 앱 실행 시도 완료");
             }
         }, 1500);
     }
 
-    // 페이지 로드가 끝나면 카카오 지도 스크립트 실행 시작
     window.onload = function() {
         loadKakaoMapScript();
     };
