@@ -207,38 +207,49 @@
         }
     }
 
-    // 2. 각 내비게이션 앱 연동 호출 함수
+   // 2. 각 내비게이션 앱 연동 호출 함수 (에러 수정 버전)
     function openNavi(type) {
         const info = getTargetInfo();
-        let url = '';
 
         if (type === 'kakao') {
-            // 카카오내비 URL Scheme (경도, 위도 순서)
-            url = `kakaonavi://navigate?name=${encodeURIComponent(info.name)}&x=${info.lng}&y=${info.lat}`;
-        } else if (type === 'tmap') {
-            // 티맵 URL Scheme
-            url = `tmap://route?rGoName=${encodeURIComponent(info.name)}&rGoX=${info.lng}&rGoY=${info.lat}`;
+            // 카카오내비 전용 정식 SDK 호출 방식 (가장 안전하고 확실함)
+            try {
+                Kakao.Navi.start({
+                    name: info.name,
+                    x: parseFloat(info.lng), // 경도 (숫자 변환)
+                    y: parseFloat(info.lat), // 위도 (숫자 변환)
+                    coordType: 'wgs84',
+                });
+            } catch (err) {
+                console.error('카카오내비 실행 실패:', err);
+                alert('카카오내비 실행 중 오류가 발생했습니다. 앱이 설치되어 있는지 확인해 주세요.');
+            }
+            return; // 카카오는 여기서 실행 후 종료
+        } 
+        
+        let url = '';
+        if (type === 'tmap') {
+            // 티맵 수정: 이름을 인코딩하지 않고 그대로 전달해야 목적지가 정상 설정됩니다.
+            url = `tmap://route?rGoName=${info.name}&rGoX=${info.lng}&rGoY=${info.lat}`;
         } else if (type === 'naver') {
-            // 네이버지도 URL Scheme
+            // 네이버지도 (기존 정상 작동 방식 유지)
             url = `nmap://navigation?dname=${encodeURIComponent(info.name)}&dlat=${info.lat}&dlng=${info.lng}`;
         }
 
-        // 모바일 기기에서 앱 실행 시도
+        // 앱 실행 시도
         window.location.href = url;
 
-        // 설치가 안 되어 있을 경우를 대비한 대체 코드
+        // 앱이 설치되지 않았을 때의 대체 처리
         setTimeout(() => {
-            if (confirm('내비게이션 앱이 실행되지 않았나요? 마켓으로 이동하시겠습니까?')) {
-                if (type === 'kakao') {
-                    window.location.href = "https://kakaonavi.com";
-                } else if (type === 'tmap') {
+            if (confirm('내비게이션 앱이 실행되지 않았나요? 마켓 또는 안내 페이지로 이동하시겠습니까?')) {
+                if (type === 'tmap') {
                     window.location.href = "https://www.tmap.co.kr";
                 } else if (type === 'naver') {
                     window.location.href = "https://m.map.naver.com";
                 }
             }
         }, 1500);
-    }
+    } 
 
     // 카카오톡을 통해 링크를 받아 들어왔을 때 자동으로 해당 목적지를 입력창에 채워주는 로직
     window.onload = function() {
