@@ -6,8 +6,6 @@
     <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
     <!-- 카카오 SDK 로드 -->
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
-    <!-- 카카오 지도 API 로드 (보안 및 프로토콜 규격 완전 최적화) -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services"></script>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #f5f6fa; padding: 10px; display: flex; justify-content: center; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 430px; text-align: center; box-sizing: border-box; }
@@ -58,11 +56,14 @@
     </div>
 </div>
 
+<!-- 카카오 지도 API 로드 (자동 로드 꺼두고 스크립트 실행 제어) -->
+<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ec4e3be0a91ec878ea9b3&libraries=services&autoload=false"></script>
+
 <script>
-    // 카카오 JavaScript SDK 초기화 (회원님의 Key 사용)
+    // 카카오 JavaScript SDK 초기화 (공유용)
     Kakao.init('e362e2f6732ec4e3be0a91ec878ea9b3'); 
 
-    // 글로벌 위치 변수 초기화 (기본값: 서울 시청 혹은 인천 인근)
+    // 기본 위치 변수 설정
     let selectedLat = 37.566826; 
     let selectedLng = 126.978656;
     let selectedName = "지정된 목적지";
@@ -71,14 +72,8 @@
     let marker;
     let geocoder;
 
-    // 카카오 지도 API가 안전하게 로드된 후 실행되도록 보장하는 초기화 함수
-    function initMap() {
-        if (typeof kakao === 'undefined' || !kakao.maps) {
-            console.error("카카오 지도 라이브러리가 아직 로드되지 않았습니다. 1초 후 재시도합니다.");
-            setTimeout(initMap, 1000);
-            return;
-        }
-
+    // 카카오 지도를 그리는 진짜 함수
+    function drawMap() {
         const mapContainer = document.getElementById('map');
         
         // URL 매개변수 확인
@@ -98,22 +93,19 @@
             level: 4
         };
 
-        // 지도 생성
         map = new kakao.maps.Map(mapContainer, mapOption);
         geocoder = new kakao.maps.services.Geocoder();
 
-        // 마커(핀) 생성 및 지도 표시
         marker = new kakao.maps.Marker({
             position: map.getCenter()
         });
         marker.setMap(map);
 
-        // 초기 주소 및 좌표 표시 설정
         if (name && lat && lng) {
             document.getElementById('targetAddr').innerText = selectedName;
             document.getElementById('targetCoords').innerText = `위도: ${selectedLat.toFixed(5)} / 경도: ${selectedLng.toFixed(5)}`;
         } else {
-            searchAddrFromCoords(map.getCenter(), function(result, status) {
+            geocoder.coord2Address(map.getCenter().getLng(), map.getCenter().getLat(), function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
                     selectedName = result[0].address.address_name;
                     document.getElementById('targetAddr').innerText = selectedName;
@@ -121,7 +113,7 @@
             });
         }
 
-        // 지도 클릭 이벤트 등록
+        // 지도 클릭 이벤트
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
             marker.setPosition(latlng);
@@ -129,7 +121,7 @@
             selectedLat = latlng.getLat();
             selectedLng = latlng.getLng();
 
-            searchAddrFromCoords(latlng, function(result, status) {
+            geocoder.coord2Address(latlng.getLng(), latlng.getLat(), function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
                     selectedName = result[0].address.address_name;
                     document.getElementById('targetAddr').innerText = selectedName;
@@ -139,19 +131,12 @@
         });
     }
 
-    function searchAddrFromCoords(coords, callback) {
-        if(geocoder) {
-            geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
-        }
-    }
+    // 카카오 지도 스크립트가 완전히 로드되면 실행되도록 안전 호출
+    kakao.maps.load(function() {
+        drawMap();
+    });
 
-    // 문서 로드 완료 시 안전하게 지도 생성 시작
-    window.onload = function() {
-        // 카카오맵 사용 설정 ON 기능이 켜진 후 브라우저가 라이브러리를 안전하게 읽을 수 있도록 대기 처리
-        setTimeout(initMap, 500);
-    };
-
-    // [공유하기] 내 카톡 단체방 링크 생성
+    // [공유하기] 카톡 링크 전송
     function shareKakao() {
         if (!selectedName || !selectedLat || !selectedLng) {
             alert("지도를 클릭해서 목적지를 먼저 지정해 주세요!");
@@ -175,7 +160,7 @@
         });
     }
 
-    // 내비게이션 연결 로직
+    // 내비 앱 연결
     function openNavi(type) {
         if (type === 'kakao') {
             try {
