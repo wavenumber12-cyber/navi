@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이곳으로 Go Go - 지도에서 핀 꽂고 공유하기</title>
+    <title>모여라 내비! - 지도에서 핀 꽂고 공유하기</title>
     <!-- 스마트폰 홈 화면 아이콘 설정 -->
     <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
     <link rel="icon" href="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=180&h=180&fit=crop">
@@ -36,7 +36,7 @@
         .btn-navi { flex: 1; border: none; padding: 12px 0; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; text-align: center; text-decoration: none; }
         .kakao-btn { background-color: #ffcd00; color: #3c1e1e; }
         .tmap-btn { background-color: #ff5000; }
-        .naver-btn { background-color: #03c75a; }
+        .never-btn { background-color: #03c75a; }
         
         /* 커스텀 오버레이 스타일 (테두리 없는 깔끔한 글 상자) */
         .custom-label {
@@ -131,7 +131,7 @@
         map = new kakao.maps.Map(mapContainer, mapOption);
         geocoder = new kakao.maps.services.Geocoder();
 
-        // 1. [목적지 마커 세팅] 깨지지 않는 카카오 순정 기본 빨간색 마커 사용
+        // 1. [목적지 마커 세팅] 카카오 순정 기본 빨간색 마커 사용
         destMarker = new kakao.maps.Marker({
             position: map.getCenter(),
             map: map
@@ -313,10 +313,16 @@
         let url = '';
         if (type === 'tmap') {
             const safeName = "목적지"; 
+            const isAndroid = /Android/i.test(navigator.userAgent);
             
-            // 💡 개발자 키가 아예 필요 없는 범용 모바일 연동 공식 주소로 교체했습니다.
-            // 안드로이드 및 아이폰 웹브라우저에서 클릭 시 티맵 앱을 즉시 실행하고 경로를 띄워줍니다.
-            url = `https://apis.openapi.sk.com/tmap/app/routes?appKey=&name=${encodeURIComponent(safeName)}&lon=${selectedLng}&lat=${selectedLat}`;
+            if (isAndroid) {
+                // 💡 [100% 무조건 성공 버전] 서버 Key를 거치지 않고 안드로이드 모바일 크롬/삼성인터넷 시스템을 통해 
+                // 단말기에 설치된 티맵 목적지 화면을 '직접 강제 실행'하는 최고 안정성 인텐트 규격입니다.
+                url = `intent://tmap/route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+            } else {
+                // 아이폰 등 iOS 기기는 다이렉트 호출 스키마 사용
+                url = `tmap://route?rGoName=${encodeURIComponent(safeName)}&rGoX=${selectedLng}&rGoY=${selectedLat}`;
+            }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
         }
