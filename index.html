@@ -212,44 +212,49 @@
         const info = getTargetInfo();
 
         if (type === 'kakao') {
-            // 카카오내비 전용 정식 SDK 호출 방식 (가장 안전하고 확실함)
             try {
                 Kakao.Navi.start({
                     name: info.name,
-                    x: parseFloat(info.lng), // 경도 (숫자 변환)
-                    y: parseFloat(info.lat), // 위도 (숫자 변환)
+                    x: parseFloat(info.lng),
+                    y: parseFloat(info.lat),
                     coordType: 'wgs84',
                 });
             } catch (err) {
                 console.error('카카오내비 실행 실패:', err);
                 alert('카카오내비 실행 중 오류가 발생했습니다. 앱이 설치되어 있는지 확인해 주세요.');
             }
-            return; // 카카오는 여기서 실행 후 종료
+            return;
         } 
         
         let url = '';
         if (type === 'tmap') {
-            // 이 새로운 2줄로 기존 tmap 코드를 대체합니다.
-            url = `tmap://route?rGoName=${encodeURIComponent(info.name)}&rGoX=${info.lng}&rGoY=${info.lat}`;
+            // [티맵 최종 수정] 인코딩된 이름과 명확한 실수(Float) 좌표를 확실하게 대입합니다.
+            const encodedName = encodeURIComponent(info.name);
+            const latVal = parseFloat(info.lat).toFixed(6);
+            const lngVal = parseFloat(info.lng).toFixed(6);
+            
+            url = `tmap://route?rGoName=${encodedName}&rGoX=${lngVal}&rGoY=${latVal}`;
         } else if (type === 'naver') {
-            // 네이버지도 (기존 정상 작동 방식 유지)
             url = `nmap://navigation?dname=${encodeURIComponent(info.name)}&dlat=${info.lat}&dlng=${info.lng}`;
         }
 
-        // 앱 실행 시도
+        // 1. 먼저 앱 실행 시도
         window.location.href = url;
 
-        // 앱이 설치되지 않았을 때의 대체 처리
+        // 2. 만약 1.5초 이내에 티맵 앱이 실행되지 않았다면 모바일 웹 길찾기로 강제 우회시킵니다.
         setTimeout(() => {
-            if (confirm('내비게이션 앱이 실행되지 않았나요? 마켓 또는 안내 페이지로 이동하시겠습니까?')) {
-                if (type === 'tmap') {
-                    window.location.href = "https://www.tmap.co.kr";
-                } else if (type === 'naver') {
-                    window.location.href = "https://m.map.naver.com";
+            if (type === 'tmap') {
+                // 스마트폰 브라우저에서 바로 길안내를 띄워주는 티맵 웹 뷰어로 이동시킵니다.
+                const fallbackUrl = `https://apis.openapi.sk.com/tmap/app/routes?appKey=e362e2f6732ec&name=${encodeURIComponent(info.name)}&lon=${info.lng}&lat=${info.lat}`;
+                
+                if (confirm('티맵 앱이 열리지 않았습니다. 브라우저로 목적지를 바로 확인하시겠습니까?')) {
+                    window.location.href = fallbackUrl;
                 }
+            } else if (type === 'naver') {
+                window.location.href = "https://m.map.naver.com";
             }
         }, 1500);
-    } 
+    }
 
     // 카카오톡을 통해 링크를 받아 들어왔을 때 자동으로 해당 목적지를 입력창에 채워주는 로직
     window.onload = function() {
