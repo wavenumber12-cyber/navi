@@ -38,7 +38,7 @@
         .tmap-btn { background-color: #ff5000; }
         .naver-btn { background-color: #03c75a; }
         
-        /* 커스텀 오버레이 스타일 (테두리 없는 깔끔한 글 상자) */
+        /* 커스텀 오버레이 스타일 */
         .custom-label {
             position: relative;
             bottom: 43px; 
@@ -102,10 +102,10 @@
     let myCurrentLng = null;
 
     let map;
-    let destMarker; // 목적지 마커 (기본 빨간색)
-    let destOverlay; // 목적지 글씨 표시 레이블
-    let myLocationMarker; // 내위치 마커 (파란색)
-    let myLocationOverlay; // 내위치 글씨 표시 레이블
+    let destMarker; 
+    let destOverlay; 
+    let myLocationMarker; 
+    let myLocationOverlay; 
     let geocoder;
 
     // 카카오 지도를 실제로 그리는 함수
@@ -131,13 +131,12 @@
         map = new kakao.maps.Map(mapContainer, mapOption);
         geocoder = new kakao.maps.services.Geocoder();
 
-        // 1. [목적지 마커 세팅] 카카오 순정 기본 빨간색 마커 사용
+        // 1. [목적지 마커 세팅]
         destMarker = new kakao.maps.Marker({
             position: map.getCenter(),
             map: map
         });
 
-        // CustomOverlay로 글씨 지정
         destOverlay = new kakao.maps.CustomOverlay({
             position: map.getCenter(),
             content: '<div class="custom-label">목적지</div>',
@@ -157,7 +156,7 @@
             });
         }
 
-        // 2. [내 위치 마커 세팅] 파란색 핀 및 테두리 없는 깔끔한 글씨 적용
+        // 2. [내 위치 마커 세팅]
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 myCurrentLat = position.coords.latitude;
@@ -181,7 +180,6 @@
                 });
                 myLocationOverlay.setMap(map);
 
-                // 공유 링크가 아닌 일반 첫 접속일 때 지도의 중심을 내 위치로 잡고 목적지 핀도 같이 정렬합니다.
                 if (!name && !lat && !lng) {
                     map.setCenter(currentPos);
                     destMarker.setPosition(currentPos);
@@ -203,7 +201,7 @@
             });
         }
 
-        // 지도 클릭 시 목적지(빨간 핀) 이동 이벤트 등록
+        // 지도 클릭 시 목적지 이동 이벤트
         kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
             const latlng = mouseEvent.latLng;
             destMarker.setPosition(latlng);
@@ -221,7 +219,6 @@
             });
         });
 
-        // 레이아웃 새로고침
         setTimeout(function() {
             if (map) {
                 map.relayout();
@@ -230,10 +227,10 @@
         }, 100);
     }
 
-    // [내 위치 공유하기] 버튼 클릭 시 내 위치를 목적지로 강제 셋팅하는 함수
+    // [내 위치 공유하기]
     function setMyPositionAsDestination() {
         if (!myCurrentLat || !myCurrentLng) {
-            alert("아직 현재 위치 정보를 불러오지 못했습니다. 잠시 후 다시 시도하거나 위치 권한 허용을 확인해 주세요.");
+            alert("아직 현재 위치 정보를 불러오지 못했습니다.");
             return;
         }
 
@@ -250,27 +247,24 @@
                 selectedName = result[0].address.address_name;
                 document.getElementById('targetAddr').innerText = selectedName;
                 document.getElementById('targetCoords').innerText = `위도: ${selectedLat.toFixed(5)} / 경도: ${selectedLng.toFixed(5)}`;
-                alert("내 현재 위치가 목적지로 지정되었습니다. 이제 상단의 공유 버튼을 눌러 공유하실 수 있습니다!");
+                alert("내 현재 위치가 목적지로 지정되었습니다!");
             }
         });
     }
 
-    // 카카오 지도 스크립트 동적 로드
     function loadKakaoMapScript() {
         const script = document.createElement('script');
         script.type = 'text/javascript';
         script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=e362e2f6732ecf112d8751219e8d3d61&libraries=services&autoload=false';
-        
         script.onload = function() {
             kakao.maps.load(function() {
                 drawMap();
             });
         };
-        
         document.head.appendChild(script);
     }
 
-    // [공유하기] 카톡 링크 전송
+    // [공유하기]
     function shareKakao() {
         if (!selectedName || !selectedLat || !selectedLng) {
             alert("목적지를 먼저 지정해 주세요!");
@@ -312,14 +306,14 @@
         
         let url = '';
         if (type === 'tmap') {
-            // 💡 회원님의 멋진 아이디어 반영: 주행 강제 모드 대신 안전한 '주소 자동 검색 창 팝업' 구조로 우회
-            // 사용자가 선택한 정제 주소명을 티맵 검색란에 자동으로 찔러 넣어 줍니다.
+            // 💡 정밀 보완: 검색명(name) 뒤에 위도(lat)와 경도(lon) 좌표 데이터를 쌍으로 묶어서 전송합니다.
+            // 이렇게 좌표 구조가 명확히 결합되어야 티맵 검색창 상단에 주소가 누락 없이 매핑됩니다.
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isAndroid) {
-                url = `intent://tmap/search?name=${encodeURIComponent(selectedName)}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
+                url = `intent://tmap/search?name=${encodeURIComponent(selectedName)}&lat=${selectedLat}&lon=${selectedLng}#Intent;scheme=tmap;package=com.skt.tmap.ku;end`;
             } else {
-                url = `tmap://search?name=${encodeURIComponent(selectedName)}`;
+                url = `tmap://search?name=${encodeURIComponent(selectedName)}&lat=${selectedLat}&lon=${selectedLng}`;
             }
         } else if (type === 'naver') {
             url = `nmap://navigation?dname=${encodeURIComponent(selectedName)}&dlat=${selectedLat}&dlng=${selectedLng}`;
